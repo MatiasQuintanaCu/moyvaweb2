@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes">
+    <title>Moyva</title>
+    <link rel="shortcut icon" href="TemplateData/favicon.ico">
+    <link rel="manifest" href="manifest.webmanifest">
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        width: 100%; height: 100%;
+        overflow: hidden; background: #000;
+      }
+      #unity-container {
+        position: fixed; top: 0; left: 0;
+        width: 100%; height: 100%;
+      }
+      #unity-canvas { width: 100%; height: 100%; display: block; }
+      #unity-loading-bar {
+        position: absolute; top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        display: none; text-align: center;
+      }
+      #unity-logo {
+        width: 154px; height: 130px;
+        background: url('TemplateData/unity-logo-dark.png') no-repeat center;
+        background-size: contain; margin: 0 auto 20px;
+      }
+      #unity-progress-bar-empty {
+        width: 141px; height: 18px; margin: 0 auto;
+        background: url('TemplateData/progress-bar-empty-dark.png') no-repeat center;
+        background-size: contain;
+      }
+      #unity-progress-bar-full {
+        width: 0%; height: 18px;
+        background: url('TemplateData/progress-bar-full-dark.png') no-repeat center left;
+        background-size: auto 100%;
+      }
+      #unity-warning {
+        position: absolute; top: 0; left: 0; right: 0; z-index: 999;
+      }
+
+      /* ── Botón instalar flotante ── */
+      #install-btn {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 9999;
+        display: none;
+        align-items: center;
+        gap: 10px;
+        background: linear-gradient(135deg, #6c63ff, #48cfad);
+        color: #fff;
+        border: none;
+        border-radius: 50px;
+        padding: 14px 24px;
+        font-size: 16px;
+        font-weight: 700;
+        font-family: sans-serif;
+        cursor: pointer;
+        box-shadow: 0 4px 20px rgba(108,99,255,0.5);
+        transition: transform 0.2s, box-shadow 0.2s;
+      }
+      #install-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 28px rgba(108,99,255,0.7);
+      }
+      #install-btn svg { flex-shrink: 0; }
+
+      /* ── Popup ── */
+      #install-overlay {
+        display: none;
+        position: fixed; inset: 0;
+        background: rgba(0,0,0,0.75);
+        z-index: 10000;
+        justify-content: center;
+        align-items: center;
+      }
+      #install-overlay.show { display: flex; }
+      #install-popup {
+        background: #1a1a2e;
+        border-radius: 20px;
+        padding: 36px 32px;
+        max-width: 380px;
+        width: 90%;
+        text-align: center;
+        color: #fff;
+        font-family: sans-serif;
+        box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+        animation: popIn 0.3s ease;
+      }
+      @keyframes popIn {
+        from { transform: scale(0.85); opacity: 0; }
+        to   { transform: scale(1);    opacity: 1; }
+      }
+      #install-popup .popup-icon {
+        margin-bottom: 12px;
+      }
+      #install-popup .popup-icon img {
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+        border-radius: 16px;
+      }
+      #install-popup h2 {
+        font-size: 22px; margin-bottom: 8px;
+        background: linear-gradient(135deg, #6c63ff, #48cfad);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      #install-popup p {
+        font-size: 14px; color: #aaa;
+        line-height: 1.6; margin-bottom: 24px;
+      }
+      .popup-actions { display: flex; flex-direction: column; gap: 12px; }
+      .popup-actions button {
+        border: none; border-radius: 50px;
+        padding: 14px; font-size: 15px;
+        font-weight: 700; cursor: pointer;
+        transition: opacity 0.2s;
+      }
+      .popup-actions button:hover { opacity: 0.85; }
+      #confirm-install {
+        background: linear-gradient(135deg, #6c63ff, #48cfad);
+        color: #fff;
+      }
+      #cancel-install {
+        background: #2a2a3e; color: #aaa;
+      }
+    </style>
+  </head>
+  <body>
+
+    <!-- Botón flotante -->
+    <button id="install-btn" onclick="showPopup()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Instalar Moyva
+    </button>
+
+    <!-- Popup -->
+    <div id="install-overlay">
+      <div id="install-popup">
+        <div class="popup-icon">
+          <img src="chanchito_iconos_1024.png" alt="Moyva">
+        </div>
+        <h2>Instalar Moyva</h2>
+        <p>Agregá Moyva a tu pantalla de inicio y jugá sin navegador, más rápido y en cualquier momento.</p>
+        <div class="popup-actions">
+          <button id="confirm-install" onclick="doInstall()">⬇ Instalar ahora</button>
+          <button id="cancel-install" onclick="hidePopup()">Ahora no</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="unity-container">
+      <canvas id="unity-canvas" tabindex="-1"></canvas>
+      <div id="unity-loading-bar">
+        <div id="unity-logo"></div>
+        <div id="unity-progress-bar-empty">
+          <div id="unity-progress-bar-full"></div>
+        </div>
+      </div>
+      <div id="unity-warning"> </div>
+    </div>
+
+    <script>
+      // ── PWA Install ──
+      let deferredPrompt = null;
+      const installBtn = document.getElementById('install-btn');
+
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        installBtn.style.display = 'flex';
+      });
+
+      function showPopup() {
+        document.getElementById('install-overlay').classList.add('show');
+      }
+      function hidePopup() {
+        document.getElementById('install-overlay').classList.remove('show');
+      }
+      async function doInstall() {
+        hidePopup();
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          installBtn.style.display = 'none';
+        }
+        deferredPrompt = null;
+      }
+
+      window.addEventListener('appinstalled', () => {
+        installBtn.style.display = 'none';
+      });
+
+      // ── Unity ──
+      window.addEventListener("load", function () {
+        if ("serviceWorker" in navigator) {
+          navigator.serviceWorker.register("ServiceWorker.js");
+        }
+      });
+
+      var container = document.querySelector("#unity-container");
+      var canvas = document.querySelector("#unity-canvas");
+      var loadingBar = document.querySelector("#unity-loading-bar");
+      var progressBarFull = document.querySelector("#unity-progress-bar-full");
+      var warningBanner = document.querySelector("#unity-warning");
+
+      function unityShowBanner(msg, type) {
+        function updateBannerVisibility() {
+          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+        }
+        var div = document.createElement('div');
+        div.innerHTML = msg;
+        warningBanner.appendChild(div);
+        if (type == 'error') div.style = 'background: red; padding: 10px;';
+        else {
+          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
+          setTimeout(function() {
+            warningBanner.removeChild(div);
+            updateBannerVisibility();
+          }, 5000);
+        }
+        updateBannerVisibility();
+      }
+
+      var buildUrl = "Build";
+      var loaderUrl = buildUrl + "/htdocs.loader.js";
+      var config = {
+        arguments: [],
+        dataUrl: buildUrl + "/htdocs.data.unityweb",
+        frameworkUrl: buildUrl + "/htdocs.framework.js.unityweb",
+        codeUrl: buildUrl + "/htdocs.wasm.unityweb",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "Totem Games",
+        productName: "Moyva",
+        productVersion: "46.0",
+        showBanner: unityShowBanner,
+      };
+
+      function resizeCanvas() {
+        canvas.style.width = window.innerWidth + 'px';
+        canvas.style.height = window.innerHeight + 'px';
+      }
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+
+      loadingBar.style.display = "block";
+
+      var script = document.createElement("script");
+      script.src = loaderUrl;
+      script.onload = () => {
+        createUnityInstance(canvas, config, (progress) => {
+          progressBarFull.style.width = 100 * progress + "%";
+        }).then((unityInstance) => {
+          loadingBar.style.display = "none";
+        }).catch((message) => {
+          alert(message);
+        });
+      };
+      document.body.appendChild(script);
+    </script>
+  </body>
+</html>
